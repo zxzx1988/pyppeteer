@@ -6,6 +6,7 @@
 import copy
 import logging
 import math
+import random
 import os.path
 from typing import Any, Dict, List, Optional, TYPE_CHECKING
 
@@ -172,12 +173,24 @@ class ElementHandle(JSHandle):
         * ``clickCount`` (int): Defaults to 1.
         * ``delay`` (int|float): Time to wait between ``mousedown`` and
           ``mouseup`` in milliseconds. Defaults to 0.
+        * ``random`` (bool): whether click a random position on this element
+            defaults to False
         """
         options = merge_dict(options, kwargs)
         await self._scrollIntoViewIfNeeded()
         obj = await self._clickablePoint()
         x = obj.get('x', 0)
         y = obj.get('y', 0)
+
+        boundingBox = await self.boundingBox()
+        if boundingBox and True == options.get('random', False):      
+            randRangeX = int(0.8 * boundingBox.get('width', 0))
+            randRangeY = int(0.8 * boundingBox.get('height', 0))
+            deltX = random.randint(0, randRangeX)
+            deltY = random.randint(0, randRangeY)
+            x = x + (randRangeX // 2 - deltX)
+            y = y + (randRangeY // 2 - deltY)
+            
         await self._page.mouse.click(x, y, options)
 
     async def uploadFile(self, *filePaths: str) -> dict:
